@@ -1,0 +1,16 @@
+
+{
+  "configurations": {
+    "launch - netcoredbg": {
+      "adapter": "netcoredbg",
+      "configuration": {
+        "request": "launch",
+        "program": "${workspaceRoot}/CommandGQL/bin/Debug/net6.0/CommandGQL.dll",
+        "args": [],
+        "stopAtEntry": true,
+        "cwd": "${workspaceRoot}",
+        "env": {"MongoDbSettings:Password":"root"}
+      }
+    }
+  }
+}
