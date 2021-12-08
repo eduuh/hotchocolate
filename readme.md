@@ -144,3 +144,131 @@ You are getting less data than you may need.
 ```bash
 dotnet ef migrations add AddPlatformToDB
 ```
+
+### Isomnia
+
+When we try to run graphql queries in parallel using aliases, We get some errors. This is due to the fact that the DbContext is not multithreaded.
+
+graphql query
+
+```json
+query {
+  a: platform {
+    id
+    name
+  }
+  b: platform {
+    id
+    name
+  }
+    c: platform {
+    id
+    name
+  }
+}
+```
+
+the result
+
+```json
+{
+  "errors": [
+    {
+      "message": "Unexpected Execution Error",
+      "locations": [
+        {
+          "line": 10,
+          "column": 5
+        }
+      ],
+      "path": [
+        "c"
+      ]
+    },
+    {
+      "message": "Unexpected Execution Error",
+      "locations": [
+        {
+          "line": 6,
+          "column": 3
+        }
+      ],
+      "path": [
+        "b"
+      ]
+    }
+  ],
+  "data": {
+    "a": [
+      {
+        "id": 1,
+        "name": "test"
+      }
+    ],
+    "b": null,
+    "c": null
+  }
+}
+```
+We can resolve this error by using polled db context.
+
+
+
+### Fixing DB Context
+
+1. Change number one is Using Polled Db Context.
+
+```csharp
+builder.Services.AddPooledDbContextFactory<AppDbContext>(opt => opt.UseSqlServer(connectionStr));
+```
+
+2. Updating the query class to be like this.
+
+This tell the method how to make use of a pooled db contextFactory.
+
+```csharp
+public class Query
+{
+    [UseDbContext(typeof(AppDbContext))]
+    public IQueryable<Platform> GetPlatform([ScopedService] AppDbContext context)
+    {
+        return context.Platforms;
+    }
+}
+```
+
+This brings us to the Service Lifetimes.
+
+### Singleton
+
+ - same for every request.
+
+### Scoped
+
+- created once per client request.
+
+### Transient
+
+- New instance created every time.
+
+
+
+### Once you add another relatioship .
+
+We need to decolate the query with **UseProjection** to be able to load nested relatioships. You
+have to walk the graph to pull back any child object.
+
+
+
+### Approaches
+
+#### Annotation Vs Code First Approaches
+
+#### Annotation
+
+- What we have use so far.
+- Use "clean" C# code / pure .Net types.
+- Annotate with attribute.
+
+
+### GraphQl Subcription
